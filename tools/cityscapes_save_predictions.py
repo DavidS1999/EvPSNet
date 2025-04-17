@@ -6,17 +6,20 @@ import torch
 import numpy as np
 import json
 
-from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
-from mmcv.runner import get_dist_info, init_dist, load_checkpoint
-from tools.fuse_conv_bn import fuse_module
+# old imports
+# from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
+# from mmcv.runner import get_dist_info, init_dist, load_checkpoint
+# from tools.fuse_conv_bn import fuse_module
 
-from mmdet.apis import multi_gpu_test, single_gpu_test
-from mmdet.core import wrap_fp16_model
-from mmdet.datasets import build_dataloader, build_dataset
-from mmdet.datasets.cityscapes import PALETTE
-from mmdet.models import build_detector
-from mmdet.apis import init_detector, inference_detector, show_result
-from mmdet.core import cityscapes_originalIds
+# from mmdet.apis import multi_gpu_test, single_gpu_test
+# from mmdet.core import wrap_fp16_model
+# from mmdet.datasets import build_dataloader, build_dataset
+# from mmdet.datasets.cityscapes import PALETTE
+from mmdet.datasets.cityscapes import CityscapesDataset
+PALETTE = CityscapesDataset.METAINFO['palette']
+# from mmdet.models import build_detector
+from mmdet.apis import init_detector, inference_detector
+# from mmdet.core import cityscapes_originalIds
 
 from PIL import Image
 from skimage.morphology import dilation

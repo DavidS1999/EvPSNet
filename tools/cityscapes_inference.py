@@ -6,16 +6,19 @@ import torch
 import numpy as np
 import json
 
-from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
-from mmcv.runner import get_dist_info, init_dist, load_checkpoint
-from tools.fuse_conv_bn import fuse_module
+# old imports
+# from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
+# from mmcv.runner import get_dist_info, init_dist, load_checkpoint
+# from tools.fuse_conv_bn import fuse_module
 
-from mmdet.apis import multi_gpu_test, single_gpu_test
-from mmdet.core import wrap_fp16_model
-from mmdet.datasets import build_dataloader, build_dataset
-from mmdet.models import build_detector
-from mmdet.apis import init_detector, inference_detector, show_result
-from mmdet.core import cityscapes_originalIds
+# from mmdet.apis import multi_gpu_test, single_gpu_test
+# from mmdet.core import wrap_fp16_model
+# from mmdet.datasets import build_dataloader, build_dataset
+# from mmdet.models import build_detector
+from mmdet.apis import init_detector, inference_detector
+# from mmdet.core import cityscapes_originalIds
+CITYSCAPES_ORIGINAL_IDS = [7, 8, 11, 12, 13, 17, 19, 20, 21,
+                           22, 23, 24, 25, 26, 27, 28, 31, 32, 33]
 
 from PIL import Image
 
@@ -49,7 +52,11 @@ def main():
     if not os.path.exists(out_base_folder):
         os.mkdir(out_base_folder)
 
-    originalIds = cityscapes_originalIds()
+    # old code
+    # originalIds = cityscapes_originalIds()
+
+    # new code
+    originalIds = CITYSCAPES_ORIGINAL_IDS
 
     for city in os.listdir(args.input):
         path = os.path.join(args.input, city)

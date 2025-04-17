@@ -8,10 +8,27 @@ import asynctest
 import mmcv
 import torch
 
-from mmdet.apis import async_inference_detector, init_detector
+# old import
+# from mmdet.apis import async_inference_detector, init_detector
+
+# new import
+from mmdet.apis.inference import async_inference_detector, init_detector
 
 if sys.version_info >= (3, 7):
-    from mmdet.utils.contextmanagers import concurrent
+    # old import
+    # from mmdet.utils.contextmanagers import concurrent
+
+    # new import
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def concurrent(queue):
+        stream = await queue.get()
+        try:
+            with torch.cuda.stream(stream):
+                yield
+        finally:
+            queue.put_nowait(stream)
 
 
 class AsyncTestCase(asynctest.TestCase):

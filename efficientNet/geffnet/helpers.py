@@ -4,8 +4,10 @@ Copyright 2020 Ross Wightman
 import torch
 import os
 from collections import OrderedDict
-from mmdet.utils import get_root_logger
-from mmcv.runner.checkpoint import load_state_dict
+# from mmdet.utils import get_root_logger
+from mmengine.logging import MMLogger
+# from mmcv.runner.checkpoint import load_state_dict
+from mmengine.runner import load_state_dict
 
 try:
     from torch.hub import load_state_dict_from_url
@@ -71,4 +73,4 @@ def load_pretrained(model, url, filter_fn=None, strict=False, logger=None):
     if filter_fn is not None:
         state_dict = filter_fn(state_dict)
 
-    load_state_dict(model, state_dict, strict=strict, logger=get_root_logger())
+    load_state_dict(model, state_dict, strict=strict, logger=MMLogger.get_current_instance()) #  or MMLogger.get_instance(name='mmdet')

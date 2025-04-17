@@ -170,32 +170,90 @@ custom_hooks = [
     dict(type="HeadHook")
 ]
 
+# old data block
+
+# data = dict(
+#     imgs_per_gpu=1,
+#     workers_per_gpu=1,
+#     train=dict(
+#         type=dataset_type,
+#         ann_file=data_root + 'annotations/train.json',
+#         img_prefix=data_root + 'train/',
+#          seg_prefix=data_root + 'stuffthingmaps/train/',
+#         pipeline=train_pipeline),
+#     val=dict(
+#         type=dataset_type,
+#         ann_file=data_root + 'annotations/val.json',
+#         img_prefix=data_root + 'val/',
+#         seg_prefix=data_root + 'stuffthingmaps/val/',
+#         panoptic_gt=data_root + 'cityscapes_panoptic_val',  
+#         pipeline=test_pipeline),
+#     test=dict(
+#         type=dataset_type,
+#         ann_file=data_root + 'annotations/val.json',
+#         img_prefix=data_root + 'val/',
+#         seg_prefix=data_root + 'stuffthingmaps/val/',
+#         panoptic_gt=data_root + 'cityscapes_panoptic_val',
+#         pipeline=test_pipeline))
 
 
-data = dict(
-    imgs_per_gpu=1,
-    workers_per_gpu=1,
-    train=dict(
+# new data block
+
+train_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/train.json',
         img_prefix=data_root + 'train/',
-         seg_prefix=data_root + 'stuffthingmaps/train/',
-        pipeline=train_pipeline),
-    val=dict(
-        type=dataset_type,
-        ann_file=data_root + 'annotations/val.json',
-        img_prefix=data_root + 'val/',
-        seg_prefix=data_root + 'stuffthingmaps/val/',
-        panoptic_gt=data_root + 'cityscapes_panoptic_val',  
-        pipeline=test_pipeline),
-    test=dict(
+        seg_prefix=data_root + 'stuffthingmaps/train/',
+        pipeline=train_pipeline
+    )
+)
+
+val_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/val.json',
         img_prefix=data_root + 'val/',
         seg_prefix=data_root + 'stuffthingmaps/val/',
         panoptic_gt=data_root + 'cityscapes_panoptic_val',
-        pipeline=test_pipeline))
-evaluation = dict(interval=10, metric=['panoptic'])
+        pipeline=test_pipeline
+    )
+)
+
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type=dataset_type,
+        ann_file=data_root + 'annotations/val.json',
+        img_prefix=data_root + 'val/',
+        seg_prefix=data_root + 'stuffthingmaps/val/',
+        panoptic_gt=data_root + 'cityscapes_panoptic_val',
+        pipeline=test_pipeline
+    )
+)
+
+# old evaluation
+# evaluation = dict(interval=10, metric=['panoptic'])
+
+
+# new evaluation
+val_evaluator = dict(type='CocoPanopticMetric')
+test_evaluator = dict(type='CocoPanopticMetric')
+
+
 # optimizer
 optimizer = dict(type='SGD', lr=0.07, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))

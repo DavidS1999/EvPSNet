@@ -10,9 +10,12 @@ CommandLine:
 """
 import torch
 
-from mmdet.core import MaxIoUAssigner
-from mmdet.core.bbox.assigners import ApproxMaxIoUAssigner, PointAssigner
+# old imports
+# from mmdet.core import MaxIoUAssigner
+# from mmdet.core.bbox.assigners import ApproxMaxIoUAssigner, PointAssigner
 
+# new imports
+from mmdet.models.task_modules.assigners import MaxIoUAssigner, ApproxMaxIoUAssigner, PointAssigner
 
 def test_max_iou_assigner():
     self = MaxIoUAssigner(
@@ -301,7 +304,7 @@ def test_random_assign_result():
     """
     Test random instantiation of assign result to catch corner cases
     """
-    from mmdet.core.bbox.assigners.assign_result import AssignResult
+    from mmdet.models.task_modules.assigners.assign_result import AssignResult
     AssignResult.random()
 
     AssignResult.random(num_gts=0, num_preds=0)

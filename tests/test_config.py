@@ -1,6 +1,5 @@
 from os.path import dirname, exists, join
 
-
 def _get_config_directory():
     """ Find the predefined detector config directory """
     try:
@@ -21,7 +20,11 @@ def test_config_build_detector():
     Test that all detection models defined in the configs can be initialized.
     """
     from xdoctest.utils import import_module_from_path
-    from mmdet.models import build_detector
+    
+    # old import
+    # from mmdet.models import build_detector
+
+    from mmdet.registry import MODELS
 
     config_dpath = _get_config_directory()
     print('Found config_dpath = {!r}'.format(config_dpath))
@@ -165,11 +168,18 @@ def test_config_build_detector():
         if 'pretrained' in config_mod.model:
             config_mod.model['pretrained'] = None
 
+        # old code
+        """
         detector = build_detector(
             config_mod.model,
             train_cfg=config_mod.train_cfg,
             test_cfg=config_mod.test_cfg)
+        """
+
+        # new code
+        detector = MODELS.build(config_mod.model)
         assert detector is not None
+
 
 
 def test_config_data_pipeline():
@@ -179,7 +189,13 @@ def test_config_data_pipeline():
         xdoctest -m tests/test_config.py test_config_build_data_pipeline
     """
     from xdoctest.utils import import_module_from_path
-    from mmdet.datasets.pipelines import Compose
+    
+    # old import
+    # from mmdet.datasets.pipelines import Compose
+
+    # new import
+    from mmcv.transforms import Compose
+
     import numpy as np
 
     config_dpath = _get_config_directory()

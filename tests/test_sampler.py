@@ -1,8 +1,13 @@
 import torch
 
-from mmdet.core import MaxIoUAssigner
-from mmdet.core.bbox.samplers import OHEMSampler, RandomSampler
+# old imports
+# from mmdet.core import MaxIoUAssigner
+# from mmdet.core.bbox.samplers import OHEMSampler, RandomSampler
 
+# new imports
+from mmdet.models.task_modules.assigners.max_iou_assigner import MaxIoUAssigner
+from mmdet.models.task_modules.samplers.random_sampler import RandomSampler
+from mmdet.models.task_modules.samplers.ohem_sampler import OHEMSampler
 
 def test_random_sampler():
     assigner = MaxIoUAssigner(
@@ -104,8 +109,18 @@ def _context_for_ohem():
     model['pretrained'] = None
     # torchvision roi align supports CPU
     model['bbox_roi_extractor']['roi_layer']['use_torchvision'] = True
-    from mmdet.models import build_detector
-    context = build_detector(model, train_cfg=train_cfg, test_cfg=test_cfg)
+    
+    # old code
+    # from mmdet.models import build_detector
+    # context = build_detector(model, train_cfg=train_cfg, test_cfg=test_cfg)
+    
+    # new code
+    from mmdet.registry import TASK_UTILS, MODELS
+    context = MODELS.build(
+        model,
+        default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg)
+    )
+    
     return context
 
 
@@ -236,7 +251,12 @@ def test_ohem_sampler_empty_pred():
 
 
 def test_random_sample_result():
-    from mmdet.core.bbox.samplers.sampling_result import SamplingResult
+    # old import 
+    #from mmdet.core.bbox.samplers.sampling_result import SamplingResult
+    
+    # new import
+    from mmdet.models.task_modules.samplers.sampling_result import SamplingResult
+    
     SamplingResult.random(num_gts=0, num_preds=0)
     SamplingResult.random(num_gts=0, num_preds=3)
     SamplingResult.random(num_gts=3, num_preds=3)

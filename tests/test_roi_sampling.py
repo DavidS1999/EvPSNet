@@ -5,7 +5,7 @@ CommandLine:
 import numpy as np
 import torch
 
-from mmdet.ops.roi_sampling import roi_sampling, invert_roi_bbx
+# from mmdet.ops.roi_sampling import roi_sampling, invert_roi_bbx # TODO
 
 
 def test_nms_device_and_dtypes_gpu():
@@ -45,7 +45,7 @@ def test_nms_device_and_dtypes_gpu():
         preds = torch.FloatTensor(mask_preds.astype(np.float32)).to(device_id)
         preds = roi_sampling(preds.unsqueeze(1), bbx_inv, bbx_idx, (1024, 2048),
                             padding="zero") 
-       assert preds.shape[0] == dets.shape[0]
-       assert preds.shape[2] == 1024
-       assert preds.shape[3] == 2048
+        assert preds.shape[0] == dets.shape[0]
+        assert preds.shape[2] == 1024
+        assert preds.shape[3] == 2048
 

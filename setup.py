@@ -123,6 +123,9 @@ def make_cuda_ext(name, module, sources):
         extra_compile_args={
             'cxx': [],
             'nvcc': [
+                # '-gencode=arch=compute_80,code=sm_80',  # Beispiel für CUDA 11.8 Architekturen  # new
+                # '-gencode=arch=compute_86,code=sm_86', # new
+                # '--expt-extended-lambda', # new
                 '-D__CUDA_NO_HALF_OPERATORS__',
                 '-D__CUDA_NO_HALF_CONVERSIONS__',
                 '-D__CUDA_NO_HALF2_OPERATORS__',

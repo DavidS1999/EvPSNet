@@ -6,11 +6,28 @@ import urllib
 import mmcv
 import torch
 
-from mmdet.apis import (async_inference_detector, inference_detector,
-                        init_detector, show_result)
-from mmdet.utils.contextmanagers import concurrent
-from mmdet.utils.profiling import profile_time
+# old imports
+# from mmdet.apis import (async_inference_detector, inference_detector,
+#                         init_detector, show_result)
+# from mmdet.utils.contextmanagers import concurrent
+#  from mmdet.utils.profiling import profile_time
 
+# new imports
+from mmdet.apis.inference import (
+    async_inference_detector, inference_detector,
+    init_detector
+)
+from mmengine.utils import track_time
+from contextlib import asynccontextmanager # for new concurrent
+
+@asynccontextmanager
+async def concurrent(queue):
+    stream = await queue.get()
+    try:
+        with torch.cuda.stream(stream):
+            yield
+    finally:
+        queue.put_nowait(stream)
 
 async def main():
     """
@@ -69,27 +86,27 @@ async def main():
             return await async_inference_detector(model, img)
 
     num_of_images = 20
-    with profile_time('benchmark', 'async'):
+    with track_time('benchmark_async'): # old with profile_time('benchmark', 'async'):
         tasks = [
             asyncio.create_task(detect(img)) for _ in range(num_of_images)
         ]
         async_results = await asyncio.gather(*tasks)
 
     with torch.cuda.stream(torch.cuda.default_stream()):
-        with profile_time('benchmark', 'sync'):
+        with track_time('benchmark_sync'): # old with profile_time('benchmark', 'sync')
             sync_results = [
                 inference_detector(model, img) for _ in range(num_of_images)
             ]
 
     result_dir = os.path.join(project_dir, 'demo')
-    show_result(
+    model.show_result( # old show_result(
         img,
         async_results[0],
         model.CLASSES,
         score_thr=0.5,
         show=False,
         out_file=os.path.join(result_dir, 'result_async.jpg'))
-    show_result(
+    model.show_result( # old show_result(
         img,
         sync_results[0],
         model.CLASSES,
