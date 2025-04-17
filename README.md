@@ -1,6 +1,7 @@
 # EvPSNet: Evidential Panoptic Segmentation Network for Uncertainy-aware Panoptic Segmentation
 
-test
+test!
+
 EvPSNet is the first approach to tackle the task of uncertainty-aware panoptic segmentation, with an aim to provide per-pixel semantic and instance label together with per-pixel panoptic uncertainty estimation.
 
 ![Illustration of EvPSNet](./images/intro.png)
