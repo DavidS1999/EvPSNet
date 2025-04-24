@@ -7,6 +7,7 @@ import torch
 # from mmdet.models.bbox_heads import BBoxHead
 
 # new imports
+from mmdet.models.task_modules import build_assigner, build_sampler
 from mmdet.registry import TASK_UTILS
 from mmdet.models.dense_heads.anchor_head import AnchorHead
 from mmdet.models.roi_heads.bbox_heads.bbox_head import BBoxHead
@@ -116,12 +117,12 @@ def test_bbox_head_loss():
         }
 
         # old code
-        # bbox_assigner = build_assigner(assign_config)
-        # bbox_sampler = build_sampler(sampler_config)
+        bbox_assigner = build_assigner(assign_config)
+        bbox_sampler = build_sampler(sampler_config)
 
         # new code
-        bbox_assigner = TASK_UTILS.build(assign_config)
-        bbox_sampler = TASK_UTILS.build(sampler_config)
+        # bbox_assigner = TASK_UTILS.build(assign_config)
+        # bbox_sampler = TASK_UTILS.build(sampler_config)
 
         gt_bboxes_ignore = [None for _ in range(num_imgs)]
         sampling_results = []

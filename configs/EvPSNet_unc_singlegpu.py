@@ -1,3 +1,6 @@
+cudnn_benchmark = True
+randomness = dict(seed=None, deterministic=False)
+
 # model settings
 model = dict(
     type='EfficientPS',
@@ -134,6 +137,13 @@ test_cfg = dict(
     panoptic=dict(
         overlap_thr=0.5,
         min_stuff_area=2048))
+
+# new train val test configs
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=160, val_interval=10)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
+
 # dataset settings
 dataset_type = 'CityscapesDataset'
 data_root = './data/cityscapes/'
@@ -254,24 +264,55 @@ val_evaluator = dict(type='CocoPanopticMetric')
 test_evaluator = dict(type='CocoPanopticMetric')
 
 
-# optimizer
-optimizer = dict(type='SGD', lr=0.07, momentum=0.9, weight_decay=0.0001)
-optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
+# old optimizer
+# optimizer = dict(type='SGD', lr=0.07, momentum=0.9, weight_decay=0.0001)
+# optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
+
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='SGD', lr=0.07, momentum=0.9, weight_decay=0.0001),
+    clip_grad=dict(max_norm=35, norm_type=2)
+)
+
+
 # learning policy
-lr_config = dict(
-    policy='step',
-    warmup='linear',
-    warmup_iters=500,
-    warmup_ratio=1.0 / 3,
-    step=[120, 144])
-checkpoint_config = dict(interval=10)
+
+# old lr block
+# lr_config = dict(
+#     policy='step',
+#     warmup='linear',
+#     warmup_iters=500,
+#     warmup_ratio=1.0 / 3,
+#     step=[120, 144])
+
+# new lr
+param_scheduler = [
+    dict(type='LinearLR', start_factor=1.0 / 3, by_epoch=False, begin=0, end=500),
+    dict(type='MultiStepLR', begin=0, end=160, by_epoch=True, milestones=[120, 144], gamma=0.1)
+]
+auto_scale_lr = dict(enable=True, base_batch_size=8)
+
+# checkpoint_config = dict(interval=10)
 # yapf:disable
-log_config = dict(
-    interval=1,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
+
+# old log
+# log_config = dict(
+#     interval=1,
+#     hooks=[
+#         dict(type='TextLoggerHook'),
+#         dict(type='TensorboardLoggerHook')
+#     ])
+
+# new log
+default_hooks = dict(
+    logger=dict(type='LoggerHook', interval=1),
+    timer=dict(type='IterTimerHook'),
+    checkpoint=dict(type='CheckpointHook', interval=10),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    param_scheduler=dict(type='ParamSchedulerHook'),
+)
+
+
 # yapf:enable
 # runtime settings
 total_epochs = 160

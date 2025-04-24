@@ -16,3 +16,9 @@ from .test_time_augs import *  # noqa: F401,F403
 from .trackers import *  # noqa: F401,F403
 from .tracking_heads import *  # noqa: F401,F403
 from .vis import *  # noqa: F401,F403
+
+from mmdet_custom import efficientps
+from mmdet_custom import mask_heads
+
+# from mmdet_custom.efficientps import efficientPS
+# from mmdet_custom.mask_heads import efficientps_semantic_head

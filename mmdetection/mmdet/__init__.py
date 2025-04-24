@@ -3,6 +3,10 @@ import mmcv
 import mmengine
 from mmengine.utils import digit_version
 
+import mmdet.models 
+import mmdet_custom.efficientps
+import mmdet_custom.mask_heads.efficientps_semantic_head
+
 from .version import __version__, version_info
 
 mmcv_minimum_version = '2.0.0rc4'

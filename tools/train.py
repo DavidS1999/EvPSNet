@@ -15,6 +15,10 @@ from mmengine.runner import Runner
 from mmengine.dist import init_dist
 from mmengine.utils import mkdir_or_exist
 
+import mmdet_custom.efficientps.efficientPS
+import mmdet_custom.mask_heads.efficientps_semantic_head
+from mmdet.registry import MODELS
+
 # from mmdet import __version__
 # from mmdet.apis import set_random_seed, train_detector
 # from mmdet.datasets import build_dataset
@@ -87,6 +91,9 @@ def main():
     
     # optional
     cfg.train_cfg.val = args.validate
+
+    print('--- Registered MODELS ---')
+    print("EfficientPS" in MODELS.module_dict)
 
     # Build runner from config and start training
     runner = Runner.from_cfg(cfg)
