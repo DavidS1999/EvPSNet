@@ -262,6 +262,7 @@ class GenEfficientNet(nn.Module):
         endpoints = []
 
         x = self.conv_stem(x)
+        # print(x)
         x = self.bn1(x)
         x = self.act1(x)
         

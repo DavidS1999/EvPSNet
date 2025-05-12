@@ -7,17 +7,67 @@ import time
 
 import mmcv
 import torch
+from torch.nn import Linear
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
+
+from mmdet.utils import register_all_modules
+register_all_modules()
+
+from mmengine.registry import MODELS as ENGINE_MODELS
+from mmengine.registry import TASK_UTILS as ENGINE_TASK_UTILS
+from mmengine.registry import HOOKS as ENGINE_HOOKS
+from mmengine.registry import DATASETS as ENGINE_DATASETS
+from mmengine.registry import TRANSFORMS as ENGINE_TRANSFORMS
+from mmengine.registry import METRICS as ENGINE_METRICS
+
+from mmdet.datasets.transforms import LoadAnnotations, RandomCrop, PackDetInputs, FixBoundingBoxes, DebugBboxCheck, ConvertBoxesToNumpy
+
+from mmdet.datasets import CityscapesDataset
+
+from mmdet.models import EfficientPS, TWOWAYFPN, RPNHead, CrossEntropyLoss, SmoothL1Loss, SingleRoIExtractor, ConvFCBBoxHead, EvidenceClassLoss, FCNSepMaskHead, EfficientPSSemanticHead
+from mmdet.models.task_modules import DeltaXYWHBBoxCoder, AnchorGenerator, MaxIoUAssigner, BboxOverlaps2D, RandomSampler
+
+from mmdet.models.hooks import HeadHook
+
+from mmdet.evaluation import CocoPanopticMetric
+
+ENGINE_METRICS.register_module(module=CocoPanopticMetric)
+
+ENGINE_TRANSFORMS.register_module(module=LoadAnnotations, force=True)
+ENGINE_TRANSFORMS.register_module(module=RandomCrop)
+ENGINE_TRANSFORMS.register_module(module=PackDetInputs)
+ENGINE_TRANSFORMS.register_module(module=FixBoundingBoxes)
+ENGINE_TRANSFORMS.register_module(module=DebugBboxCheck)
+ENGINE_TRANSFORMS.register_module(module=ConvertBoxesToNumpy)
+
+ENGINE_DATASETS.register_module(module=CityscapesDataset)
+
+ENGINE_HOOKS.register_module(module=HeadHook)
+
+ENGINE_MODELS.register_module(module=EfficientPS)
+ENGINE_MODELS.register_module(module=TWOWAYFPN)
+ENGINE_MODELS.register_module(module=RPNHead)
+ENGINE_MODELS.register_module(module=CrossEntropyLoss)
+ENGINE_MODELS.register_module(module=SmoothL1Loss)
+ENGINE_MODELS.register_module(module=SingleRoIExtractor)
+ENGINE_MODELS.register_module(module=ConvFCBBoxHead)
+ENGINE_MODELS.register_module(module=EvidenceClassLoss)
+ENGINE_MODELS.register_module(module=FCNSepMaskHead)
+ENGINE_MODELS.register_module(module=EfficientPSSemanticHead)
+
+ENGINE_TASK_UTILS.register_module(module=DeltaXYWHBBoxCoder)
+ENGINE_TASK_UTILS.register_module(module=AnchorGenerator)
+ENGINE_TASK_UTILS.register_module(module=MaxIoUAssigner)
+ENGINE_TASK_UTILS.register_module(module=BboxOverlaps2D)
+ENGINE_TASK_UTILS.register_module(module=RandomSampler)
+
+ENGINE_TASK_UTILS.register_module(module=Linear)
 
 from mmengine.config import Config
 from mmengine.runner import Runner
 from mmengine.dist import init_dist
 from mmengine.utils import mkdir_or_exist
-
-import mmdet_custom.efficientps.efficientPS
-import mmdet_custom.mask_heads.efficientps_semantic_head
-from mmdet.registry import MODELS
 
 # from mmdet import __version__
 # from mmdet.apis import set_random_seed, train_detector
@@ -90,10 +140,7 @@ def main():
         cfg.deterministic = args.deterministic
     
     # optional
-    cfg.train_cfg.val = args.validate
-
-    print('--- Registered MODELS ---')
-    print("EfficientPS" in MODELS.module_dict)
+    # cfg.train_cfg.val = args.validate
 
     # Build runner from config and start training
     runner = Runner.from_cfg(cfg)

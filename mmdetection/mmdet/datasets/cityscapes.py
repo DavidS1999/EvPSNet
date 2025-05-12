@@ -19,6 +19,10 @@ class CityscapesDataset(CocoDataset):
                     (0, 60, 100), (0, 80, 100), (0, 0, 230), (119, 11, 32)]
     }
 
+    def __init__(self, *args, panoptic_gt=None, **kwargs):
+        self.panoptic_gt = panoptic_gt
+        super().__init__(*args, **kwargs)
+
     def filter_data(self) -> List[dict]:
         """Filter annotations according to filter_cfg.
 

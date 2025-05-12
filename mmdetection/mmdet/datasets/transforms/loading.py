@@ -12,7 +12,7 @@ from mmengine.fileio import get
 from mmengine.structures import BaseDataElement
 
 from mmdet.registry import TRANSFORMS
-from mmdet.structures.bbox import get_box_type
+from mmdet.structures.bbox import get_box_type, BaseBoxes, HorizontalBoxes
 from mmdet.structures.bbox.box_type import autocast_box_type
 from mmdet.structures.mask import BitmapMasks, PolygonMasks
 
@@ -447,6 +447,24 @@ class LoadAnnotations(MMCV_LoadAnnotations):
             self._load_masks(results)
         if self.with_seg:
             self._load_seg_map(results)
+
+        # new code
+        # Ensure bounding boxes are well-formed numpy arrays
+
+        if 'gt_bboxes' in results:
+            bboxes = results['gt_bboxes']
+            if isinstance(bboxes, BaseBoxes):
+                if len(bboxes) == 0:
+                    results['gt_bboxes'] = bboxes.new_empty((0, 4))
+            elif isinstance(bboxes, list):
+                results['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
+            elif isinstance(bboxes, np.ndarray):
+                if bboxes.size == 0:
+                    results['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
+                elif bboxes.ndim != 2 or bboxes.shape[1] != 4:
+                    raise ValueError(f'gt_bboxes should have shape (N, 4), but got {bboxes.shape}')
+
+        print(results['gt_bboxes'])
         return results
 
     def __repr__(self) -> str:
@@ -459,6 +477,24 @@ class LoadAnnotations(MMCV_LoadAnnotations):
         repr_str += f"imdecode_backend='{self.imdecode_backend}', "
         repr_str += f'backend_args={self.backend_args})'
         return repr_str
+
+@TRANSFORMS.register_module()
+class FixBoundingBoxes:
+    def __call__(self, results):
+        print(f"[DEBUG] Fehlerhaftes Bild: {results.get('img_path', 'N/A')}")
+        bboxes = results.get('gt_bboxes', None)
+        if bboxes is None:
+            results['gt_bboxes'] = HorizontalBoxes(torch.zeros((0, 4), dtype=torch.float32))
+        elif isinstance(bboxes, HorizontalBoxes):
+            if len(bboxes) == 0:
+                results['gt_bboxes'] = HorizontalBoxes(torch.zeros((0, 4), dtype=torch.float32))
+        elif isinstance(bboxes, (list, np.ndarray)):
+            try:
+                arr = np.array(bboxes, dtype=np.float32).reshape(-1, 4)
+                results['gt_bboxes'] = HorizontalBoxes(torch.from_numpy(arr))
+            except Exception as e:
+                raise ValueError(f"Invalid gt_bboxes format: {bboxes}") from e
+        return results
 
 
 @TRANSFORMS.register_module()

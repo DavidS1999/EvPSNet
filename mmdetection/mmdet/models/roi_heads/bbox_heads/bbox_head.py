@@ -81,7 +81,7 @@ class BBoxHead(BaseModule):
             cls_predictor_cfg_ = self.cls_predictor_cfg.copy()
             cls_predictor_cfg_.update(
                 in_features=in_channels, out_features=cls_channels)
-            self.fc_cls = MODELS.build(cls_predictor_cfg_)
+            self.fc_cls = nn.Linear(cls_predictor_cfg_['in_features'], cls_predictor_cfg_['out_features'])
         if self.with_reg:
             box_dim = self.bbox_coder.encode_size
             out_dim_reg = box_dim if reg_class_agnostic else \
@@ -90,7 +90,7 @@ class BBoxHead(BaseModule):
             if isinstance(reg_predictor_cfg_, (dict, ConfigDict)):
                 reg_predictor_cfg_.update(
                     in_features=in_channels, out_features=out_dim_reg)
-            self.fc_reg = MODELS.build(reg_predictor_cfg_)
+            self.fc_reg = nn.Linear(reg_predictor_cfg_['in_features'], reg_predictor_cfg_['out_features'])
         self.debug_imgs = None
         if init_cfg is None:
             self.init_cfg = []

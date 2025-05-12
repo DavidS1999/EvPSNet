@@ -1,5 +1,8 @@
+from .base import BaseDetector
+from .rpn import RPN
+from .two_stage import TwoStageDetector
 from .efficientPS import EfficientPS
-from .base import *
-from .rpn import *
-from .test_mixins import *
-from .two_stage import *
+
+__all__ = [
+    'BaseDetector', 'TwoStageDetector', 'RPN', 'EfficientPS',
+]
