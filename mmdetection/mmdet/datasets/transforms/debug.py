@@ -1,6 +1,7 @@
 from mmcv.transforms import BaseTransform
 from mmdet.registry import TRANSFORMS
 import torch
+import numpy as np
 
 @TRANSFORMS.register_module()
 class DebugBboxCheck(BaseTransform):

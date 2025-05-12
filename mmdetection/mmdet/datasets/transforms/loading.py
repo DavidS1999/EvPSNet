@@ -464,7 +464,7 @@ class LoadAnnotations(MMCV_LoadAnnotations):
                 elif bboxes.ndim != 2 or bboxes.shape[1] != 4:
                     raise ValueError(f'gt_bboxes should have shape (N, 4), but got {bboxes.shape}')
 
-        print(results['gt_bboxes'])
+        # print(results['gt_bboxes'])
         return results
 
     def __repr__(self) -> str:
