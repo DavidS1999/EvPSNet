@@ -316,8 +316,6 @@ class CocoPanopticMetric(BaseMetric):
         if self._coco_api is None:
             categories = dict()
             for id, name in enumerate(self.dataset_meta['classes']):
-                import pdb
-                pdb.set_trace()
                 isthing = 1 if name in self.dataset_meta['thing_classes']\
                     else 0
                 categories[id] = {'id': id, 'name': name, 'isthing': isthing}
@@ -330,6 +328,8 @@ class CocoPanopticMetric(BaseMetric):
 
         for data_sample in data_samples:
             # parse pred
+            import pdb
+            pdb.set_trace()
             img_id = data_sample['img_id']
             segm_file = osp.basename(data_sample['img_path']).replace(
                 '.jpg', '.png')

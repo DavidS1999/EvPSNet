@@ -17,7 +17,7 @@ from mmdet.models.utils import empty_instances, multi_apply
 from mmdet.registry import MODELS, TASK_UTILS
 from mmdet.structures.bbox import get_box_tensor, scale_boxes
 from mmdet.utils import ConfigType, InstanceList, OptMultiConfig
-
+from mmdet.models.task_modules.coders.delta_xywh_bbox_coder import delta2bbox
 
 @MODELS.register_module()
 class BBoxHead(BaseModule):
@@ -706,3 +706,45 @@ class BBoxHead(BaseModule):
         regressed_bboxes = self.bbox_coder.decode(
             priors, bbox_pred, max_shape=max_shape)
         return regressed_bboxes
+    
+    # from old version
+    def get_det_bboxes(self,
+                    rois,
+                    cls_score,
+                    bbox_pred,
+                    img_shape,
+                    scale_factor,
+                    rescale=False,
+                    cfg=None):
+        if isinstance(cls_score, list):
+            cls_score = sum(cls_score) / float(len(cls_score))
+        if cls_score is not None:
+            scores = F.softmax(cls_score, dim=1)[:, :-1]  # exclude background class, this part ist new: [:, :-1]
+        else:
+            scores = None
+
+        if bbox_pred is not None:
+            bboxes = self.bbox_coder.decode(rois[:, 1:], bbox_pred, max_shape=img_shape)
+            # old
+            # bboxes = delta2bbox(rois[:, 1:], bbox_pred, self.target_means,
+            #                     self.target_stds, img_shape)
+        else:
+            bboxes = rois[:, 1:].clone()
+            if img_shape is not None:
+                bboxes[:, [0, 2]].clamp_(min=0, max=img_shape[1] - 1)
+                bboxes[:, [1, 3]].clamp_(min=0, max=img_shape[0] - 1)
+
+        if rescale:
+            if isinstance(scale_factor, float):
+                bboxes /= scale_factor
+            else:
+                scale_factor = torch.from_numpy(scale_factor).to(bboxes.device)
+                bboxes = (bboxes.view(bboxes.size(0), -1, 4) /
+                        scale_factor).view(bboxes.size()[0], -1)
+        if cfg is None:
+            return bboxes, scores
+        else:
+            det_bboxes, det_labels = multiclass_nms(
+                bboxes, scores, cfg.score_thr, cfg.nms, cfg.max_per_img)
+
+            return det_bboxes, det_labels    
