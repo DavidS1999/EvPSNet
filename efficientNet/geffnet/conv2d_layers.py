@@ -66,6 +66,8 @@ def _split_channels(num_chan, num_groups):
 def conv2d_same(
         x, weight: torch.Tensor, bias: Optional[torch.Tensor] = None, stride: Tuple[int, int] = (1, 1),
         padding: Tuple[int, int] = (0, 0), dilation: Tuple[int, int] = (1, 1), groups: int = 1):
+    if x.dtype == torch.uint8:
+        x = x.float() / 255.0  # Quickfix
     ih, iw = x.size()[-2:]
     kh, kw = weight.size()[-2:]
     pad_h = _calc_same_pad(ih, kh, stride[0], dilation[0])

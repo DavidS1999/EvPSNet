@@ -363,6 +363,8 @@ class EfficientPS(BaseDetector):
     def simple_test(self, img, img_metas, proposals=None, rescale=False, eval=None):
         os.makedirs(self.out_dir, exist_ok=True)
 
+        img = img.to(next(self.parameters()).device)
+
         x = self.extract_feat(img)
         semantic_logits = self.semantic_head(x[:4])
         result = []
@@ -413,7 +415,13 @@ class EfficientPS(BaseDetector):
     def simple_test_rpn(self, x, img_metas, rpn_test_cfg):
         rpn_outs = self.rpn_head(x)
         proposal_inputs = rpn_outs + (img_metas, rpn_test_cfg)
-        proposal_list = self.rpn_head.get_bboxes(*proposal_inputs)
+        # proposal_list = self.rpn_head.get_bboxes(*proposal_inputs)
+
+        proposal_list = self.rpn_head.predict_by_feat(*rpn_outs,
+                                                      batch_img_metas = img_metas,
+                                                      cfg = rpn_test_cfg, # self.train_cfg.get("rpn_proposal", self.test_cfg.rpn,),
+                                                      rescale = False)
+        
         return proposal_list
 
     def simple_test_bboxes(self,
@@ -423,22 +431,37 @@ class EfficientPS(BaseDetector):
                     rcnn_test_cfg,
                     rescale=False):
 
-        rois = bbox2roi(proposals)
+        # rois = bbox2roi(proposals)
+        rois = bbox2roi([res.bboxes for res in proposals])
+
         roi_feats = self.bbox_roi_extractor(
             x[:len(self.bbox_roi_extractor.featmap_strides)], rois)
         if self.with_shared_head:
             roi_feats = self.shared_head(roi_feats)
         cls_score, bbox_pred = self.bbox_head(roi_feats)
-        img_shape = img_metas[0]['img_shape']
-        scale_factor = img_metas[0]['scale_factor']
-        det_bboxes, det_labels = self.bbox_head.get_det_bboxes(
-            rois,
-            cls_score,
-            bbox_pred,
-            img_shape,
-            scale_factor,
-            rescale=rescale,
-            cfg=rcnn_test_cfg)
+        # img_shape = img_metas[0]['img_shape']
+        # scale_factor = img_metas[0]['scale_factor']
+        # det_bboxes, det_labels = self.bbox_head.get_det_bboxes(
+        #     rois,
+        #     cls_score,
+        #     bbox_pred,
+        #     img_shape,
+        #     scale_factor,
+        #     rescale=rescale,
+        #     cfg=rcnn_test_cfg)
+        
+        results_list = self.bbox_head.predict_by_feat(
+        rois=(rois,), 
+        cls_scores=(cls_score,), 
+        bbox_preds=(bbox_pred,), 
+        batch_img_metas=img_metas,
+        rcnn_test_cfg=rcnn_test_cfg,
+        rescale=rescale
+        )
+
+        det_bboxes = results_list[0].bboxes
+        det_labels = results_list[0].labels
+        
         return det_bboxes, det_labels
 
     def simple_test_mask(self,
