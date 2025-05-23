@@ -267,7 +267,7 @@ class CocoPanopticMetric(BaseMetric):
         result = dict()
         result['img_id'] = img_id
         # shape (1, H, W) -> (H, W)
-        pan = pred['pred_panoptic_seg']['sem_seg'].cpu().numpy()[0]
+        pan = pred['pred_panoptic_seg']['sem_seg'].cpu().numpy() # [0] comment because mmcv imwrite fails because of too many dimensions
         ignore_index = pred['pred_panoptic_seg'].get(
             'ignore_index', len(self.dataset_meta['classes']))
         pan_labels = np.unique(pan)
@@ -328,8 +328,6 @@ class CocoPanopticMetric(BaseMetric):
 
         for data_sample in data_samples:
             # parse pred
-            import pdb
-            pdb.set_trace()
             img_id = data_sample['img_id']
             segm_file = osp.basename(data_sample['img_path']).replace(
                 '.jpg', '.png')

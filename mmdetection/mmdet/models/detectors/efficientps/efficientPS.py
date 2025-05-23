@@ -368,6 +368,7 @@ class EfficientPS(BaseDetector):
         x = self.extract_feat(img)
         semantic_logits = self.semantic_head(x[:4])
         result = []
+
         if semantic_logits.shape[0] == 1:
             proposal_list = self.simple_test_rpn(x, img_metas,
                                     self.test_cfg.rpn)
@@ -375,6 +376,12 @@ class EfficientPS(BaseDetector):
             det_bboxes, det_labels = self.simple_test_bboxes(x, 
                 img_metas, proposal_list, self.test_cfg.rcnn, rescale=rescale)
         
+            instance = InstanceData()
+            instance.set_metainfo(img_metas[0])
+            instance.labels = det_labels
+            instance.bboxes = det_bboxes
+            instance.segments_info = [] # TODO for evaluation per class
+            
             if eval is not None:
                     
                 panoptic_mask, cat_ = self.simple_test_mask_(
@@ -384,19 +391,22 @@ class EfficientPS(BaseDetector):
                 # result.append([panoptic_mask, cat_, img_metas])
 
                 # new
-                instance = InstanceData()
-                instance.pred_panoptic_seg = panoptic_mask
-                instance.labels = cat_
-                instance.metainfo = img_metas[0]
-                result.append(instance)
-        
+                # instance.labels = cat_   # TODO, commented because length 4 doesn't match panoptic_mask
+                instance.pred_panoptic_seg = dict(sem_seg = panoptic_mask,
+                                                  )
+
             else:          
-                bbox_results = bbox2result(det_bboxes, det_labels,
+                instance.bbox_results = bbox2result(det_bboxes, det_labels,
                                         self.bbox_head.num_classes)
-                mask_results = self.simple_test_mask(
+                panoptic_mask, cat_ = self.simple_test_mask(
                     x, img_metas, det_bboxes, det_labels, semantic_logits, rescale=rescale)
 
-                return bbox_results, mask_results
+                # instance.labels = cat_
+                instance.pred_panoptic_seg = dict(sem_seg = panoptic_mask,
+                                                  )
+                
+
+            result.append(instance)
         else:
             for i in range(len(img_metas)):
                 new_x = []
@@ -418,9 +428,10 @@ class EfficientPS(BaseDetector):
 
                 # new
                 instance = InstanceData()
-                instance.pred_panoptic_seg = panoptic_mask
-                instance.labels = cat_
-                instance.metainfo = img_metas[i]
+                instance.pred_panoptic_seg = dict(semg_seg=panoptic_mask)
+                # instance.labels = cat_
+                instance.set_metainfo(img_metas[i])
+                instance.segments_info = [] # TODO for evaluation per class
                 result.append(instance)
 
         return result
@@ -449,8 +460,6 @@ class EfficientPS(BaseDetector):
                     rescale=False):
 
         # rois = bbox2roi(proposals)
-        import pdb
-        pdb.set_trace()
         rois = bbox2roi([res.bboxes for res in proposals])
 
         roi_feats = self.bbox_roi_extractor(
@@ -459,28 +468,28 @@ class EfficientPS(BaseDetector):
             roi_feats = self.shared_head(roi_feats)
         cls_score, bbox_pred = self.bbox_head(roi_feats)
 
-        img_shape = img_metas[0]['img_shape']
-        scale_factor = img_metas[0]['scale_factor']
-        det_bboxes, det_labels = self.bbox_head.get_det_bboxes(
-            rois,
-            cls_score,
-            bbox_pred,
-            img_shape,
-            scale_factor,
-            rescale=rescale,
-            cfg=rcnn_test_cfg)
+        # img_shape = img_metas[0]['img_shape']
+        # scale_factor = img_metas[0]['scale_factor']
+        # det_bboxes, det_labels = self.bbox_head.get_det_bboxes(
+        #     rois,
+        #     cls_score,
+        #     bbox_pred,
+        #     img_shape,
+        #     scale_factor,
+        #     rescale=rescale,
+        #     cfg=rcnn_test_cfg)
         
-        # results_list = self.bbox_head.predict_by_feat(
-        # rois=(rois,), 
-        # cls_scores=(cls_score,), 
-        # bbox_preds=(bbox_pred,), 
-        # batch_img_metas=img_metas,
-        # rcnn_test_cfg=rcnn_test_cfg,
-        # rescale=rescale
-        # )
+        results_list = self.bbox_head.predict_by_feat(
+        rois=(rois,), 
+        cls_scores=(cls_score,), 
+        bbox_preds=(bbox_pred,), 
+        batch_img_metas=img_metas,
+        rcnn_test_cfg=rcnn_test_cfg,
+        rescale=rescale
+        )
 
-        # det_bboxes = results_list[0].bboxes
-        # det_labels = results_list[0].labels
+        det_bboxes = results_list[0].bboxes
+        det_labels = results_list[0].labels
         
         return det_bboxes, det_labels
 
@@ -528,8 +537,8 @@ class EfficientPS(BaseDetector):
 
         ori_shape = img_metas[0]['ori_shape']
         scale_factor = img_metas[0]['scale_factor']
-        ref_size = (np.int(np.round(ori_shape[0]*scale_factor)), 
-                    np.int(np.round(ori_shape[1]*scale_factor)))
+        ref_size = (int(np.round(ori_shape[0]*scale_factor[0])), 
+                    int(np.round(ori_shape[1]*scale_factor[1])))
         semantic_logits = F.interpolate(semantic_logits, size=ref_size, 
                                 mode="bilinear", align_corners=False)   
         sem_pred = torch.argmax(semantic_logits, dim=1)[0]
@@ -550,8 +559,8 @@ class EfficientPS(BaseDetector):
             entropy_unc = entropy_unc.squeeze(0)
             entropy_unc = entropy_unc/torch.log(torch.tensor(19.0))
             sem_unc_prob = entropy_unc
-
-        sem_unc_prob_file_name = img_metas[0]['filename'].split("/")[-1].replace(".png","_uncMap")
+            
+        sem_unc_prob_file_name = img_metas[0]['img_path'].split("/")[-1].replace(".png","_uncMap") # old 'filename'
         np.save(os.path.join(self.out_dir, sem_unc_prob_file_name),sem_unc_prob.detach().cpu().numpy(),allow_pickle=True,)
         
 
@@ -767,7 +776,7 @@ class EfficientPS(BaseDetector):
         ignore_val = intermediate_mask.max().item() + 1
         ignore_arr = torch.ones((ignore_val,), dtype=unique.dtype, device=unique.device) * ignore_val
         total_unique = unique.shape[0]
-        ignore_arr[unique] = torch.arange(total_unique).cuda(ignore_arr.device)  
+        ignore_arr[unique] = torch.arange(total_unique) #.cuda(ignore_arr.device)  
         panoptic_mask = ignore_arr[intermediate_mask]
         panoptic_mask[intermediate_mask == ignore_val] = 0 
 
@@ -779,7 +788,7 @@ class EfficientPS(BaseDetector):
         cls_stuff = cls_stuff[cls_stuff!=self.num_stuff]     
 
         tmp = torch.ones((self.num_stuff + 1,), dtype=cls_stuff.dtype, device=cls_stuff.device) * self.num_stuff
-        tmp[cls_stuff] = torch.arange(cls_stuff.shape[0]).cuda(tmp.device)  
+        tmp[cls_stuff] = torch.arange(cls_stuff.shape[0])# .cuda(tmp.device)  
         new_sem_pred = tmp[sem_pred]
         cat_ = torch.cat((cat_, cls_stuff.cpu().long()), -1)   
         bool_mask = new_sem_pred != self.num_stuff   
@@ -795,6 +804,10 @@ class EfficientPS(BaseDetector):
 
         # Extract metainfo
         img_metas = [sample.metainfo for sample in data_samples]
+
+        # TODO
+        if "eval" not in kwargs:
+            kwargs["eval"] = True
         
         if len(inputs) == 1:
             return self.simple_test(inputs[0].unsqueeze(0), [img_metas[0]], **kwargs)
