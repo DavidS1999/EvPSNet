@@ -792,7 +792,8 @@ class EfficientPS(BaseDetector):
         cls_stuff = cls_stuff[cls_stuff!=self.num_stuff]
 
         # DEBUG tests:
-        cls_stuff = cls_stuff.cpu()     
+        cls_stuff = cls_stuff.cpu()   
+        sem_pred = sem_pred.cpu()  
 
         tmp = torch.ones((self.num_stuff + 1,), dtype=cls_stuff.dtype, device=cls_stuff.device) * self.num_stuff
         tmp[cls_stuff] = torch.arange(cls_stuff.shape[0])# .cuda(tmp.device)  
@@ -813,8 +814,8 @@ class EfficientPS(BaseDetector):
         img_metas = [sample.metainfo for sample in data_samples]
 
         # TODO
-        if "eval" not in kwargs:
-            kwargs["eval"] = True
+        # if "eval" not in kwargs:
+        #     kwargs["eval"] = True
         
         if len(inputs) == 1:
             return self.simple_test(inputs[0].unsqueeze(0), [img_metas[0]], **kwargs)
