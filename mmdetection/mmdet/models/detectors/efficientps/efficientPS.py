@@ -776,6 +776,10 @@ class EfficientPS(BaseDetector):
         ignore_val = intermediate_mask.max().item() + 1
         ignore_arr = torch.ones((ignore_val,), dtype=unique.dtype, device=unique.device) * ignore_val
         total_unique = unique.shape[0]
+
+        # DEBUG tests:
+        unique = unique.cpu()
+
         ignore_arr[unique] = torch.arange(total_unique) #.cuda(ignore_arr.device)  
         panoptic_mask = ignore_arr[intermediate_mask]
         panoptic_mask[intermediate_mask == ignore_val] = 0 
@@ -785,7 +789,10 @@ class EfficientPS(BaseDetector):
         sem_pred[sem_pred >= self.num_stuff] = self.num_stuff
         cls_stuff, area = torch.unique(sem_pred, return_counts=True)
         cls_stuff[area < self.test_cfg.panoptic.min_stuff_area] = self.num_stuff
-        cls_stuff = cls_stuff[cls_stuff!=self.num_stuff]     
+        cls_stuff = cls_stuff[cls_stuff!=self.num_stuff]
+
+        # DEBUG tests:
+        cls_stuff = cls_stuff.cpu()     
 
         tmp = torch.ones((self.num_stuff + 1,), dtype=cls_stuff.dtype, device=cls_stuff.device) * self.num_stuff
         tmp[cls_stuff] = torch.arange(cls_stuff.shape[0])# .cuda(tmp.device)  
